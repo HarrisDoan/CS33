@@ -1,0 +1,30 @@
+0000000000401017 <phase_3>:
+  401017:       53                      push   %rbx
+  401018:       48 83 ec 10             sub    $0x10,%rsp
+  40101c:       c7 44 24 0c 00 00 00    movl   $0x0,0xc(%rsp)
+  401023:       00
+  401024:       c7 44 24 08 00 00 00    movl   $0x0,0x8(%rsp)
+  40102b:       00
+  40102c:       48 8d 4c 24 08          lea    0x8(%rsp),%rcx
+  401031:       48 8d 54 24 0c          lea    0xc(%rsp),%rdx
+  401036:       be 79 2e 40 00          mov    $0x402e79,%esi
+  40103b:       b8 00 00 00 00          mov    $0x0,%eax
+  401040:       e8 5b fc ff ff          callq  400ca0 <__isoc99_sscanf@plt>
+  401045:       83 f8 01                cmp    $0x1,%eax
+  401048:       7e 0a                   jle    401054 <phase_3+0x3d>
+  40104a:       8b 44 24 08             mov    0x8(%rsp),%eax
+  40104e:       39 44 24 0c             cmp    %eax,0xc(%rsp)
+  401052:       75 05                   jne    401059 <phase_3+0x42>
+  401054:       e8 7b 06 00 00          callq  4016d4 <explode_bomb>
+  401059:       8b 7c 24 0c             mov    0xc(%rsp),%edi
+  40105d:       e8 6a ff ff ff          callq  400fcc <func_switch>
+  401062:       89 c3                   mov    %eax,%ebx
+  401064:       8b 7c 24 08             mov    0x8(%rsp),%edi
+  401068:       e8 5f ff ff ff          callq  400fcc <func_switch>
+  40106d:       39 c3                   cmp    %eax,%ebx
+  40106f:       75 06                   jne    401077 <phase_3+0x60>
+  401071:       48 83 c4 10             add    $0x10,%rsp
+  401075:       5b                      pop    %rbx
+  401076:       c3                      retq
+  401077:       e8 58 06 00 00          callq  4016d4 <explode_bomb>
+  40107c:       eb f3                   jmp    401071 <phase_3+0x5a>

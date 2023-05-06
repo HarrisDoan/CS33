@@ -1,0 +1,116 @@
+0000000000401017 <phase_3>:
+  401017:       53                      push   %rbx
+  401018:       48 83 ec 10             sub    $0x10,%rsp
+  40101c:       c7 44 24 0c 00 00 00    movl   $0x0,0xc(%rsp)
+  401023:       00
+  401024:       c7 44 24 08 00 00 00    movl   $0x0,0x8(%rsp)
+  40102b:       00
+  40102c:       48 8d 4c 24 08          lea    0x8(%rsp),%rcx
+  401031:       48 8d 54 24 0c          lea    0xc(%rsp),%rdx
+  401036:       be 79 2e 40 00          mov    $0x402e79,%esi
+  40103b:       b8 00 00 00 00          mov    $0x0,%eax
+  401040:       e8 5b fc ff ff          callq  400ca0 <__isoc99_sscanf@plt>
+  401045:       83 f8 01                cmp    $0x1,%eax
+  401048:       7e 0a                   jle    401054 <phase_3+0x3d>
+  40104a:       8b 44 24 08             mov    0x8(%rsp),%eax
+  40104e:       39 44 24 0c             cmp    %eax,0xc(%rsp)
+  401052:       75 05                   jne    401059 <phase_3+0x42>
+  401054:       e8 7b 06 00 00          callq  4016d4 <explode_bomb>
+  401059:       8b 7c 24 0c             mov    0xc(%rsp),%edi
+  40105d:       e8 6a ff ff ff          callq  400fcc <func_switch>
+  401062:       89 c3                   mov    %eax,%ebx
+  401064:       8b 7c 24 08             mov    0x8(%rsp),%edi
+  401068:       e8 5f ff ff ff          callq  400fcc <func_switch>
+  40106d:       39 c3                   cmp    %eax,%ebx
+  40106f:       75 06                   jne    401077 <phase_3+0x60>
+  401071:       48 83 c4 10             add    $0x10,%rsp
+  401075:       5b                      pop    %rbx
+  401076:       c3                      retq
+  401077:       e8 58 06 00 00          callq  4016d4 <explode_bomb>
+  40107c:       eb f3                   jmp    401071 <phase_3+0x5a>
+
+
+
+0000000000400fcc <func_switch>:
+  400fcc:       83 ff 07                cmp    $0x7,%edi
+  400fcf:       77 2d                   ja     400ffe <func_switch+0x32>
+  400fd1:       89 ff                   mov    %edi,%edi
+  400fd3:       ff 24 fd 50 27 40 00    jmpq   *0x402750(,%rdi,8)
+  400fda:       b8 85 00 00 00          mov    $0x85,%eax
+  400fdf:       c3                      retq
+  400fe0:       b8 6b 03 00 00          mov    $0x36b,%eax
+  400fe5:       c3                      retq
+  400fe6:       b8 90 01 00 00          mov    $0x190,%eax
+  400feb:       c3                      retq
+  400fec:       b8 53 01 00 00          mov    $0x153,%eax
+  400ff1:       c3                      retq
+  400ff2:       b8 ba 01 00 00          mov    $0x1ba,%eax
+  400ff7:       c3                      retq
+  400ff8:       b8 07 02 00 00          mov    $0x207,%eax
+  400ffd:       c3                      retq
+  400ffe:       48 83 ec 08             sub    $0x8,%rsp
+  401002:       e8 cd 06 00 00          callq  4016d4 <explode_bomb>
+  401007:       b8 00 00 00 00          mov    $0x0,%eax
+  40100c:       48 83 c4 08             add    $0x8,%rsp
+  401010:       c3                      retq
+  401011:       b8 d6 00 00 00          mov    $0xd6,%eax
+  401016:       c3                      retq
+
+--------------------------------------------------------------------------------------------
+
+Phase 3:
+
+1.) pushes %rbx to the stack and allocates 10 bytes to make space on the stack.
+
+2.) Move the immediate value 0 to the value stored in %rsp with a displacement of 12. In terms of integers, this is a 3rd integer value?
+
+3.) Move the immediate value 0 to the value stored in %rsp with a displacement of 8. In terms of integers, this is a 2nd integer value?
+
+4.) Perform an lea to compute the memory address location for the displace of 0xc(%rsp) and 0x8(%rsp). These memory addresses point to the value 0 since we moved 0 into these locations.
+
+$0xc(%rsp) -> 0
+$0x8(%rsp) -> 0
+%rcx -> 0
+%rdx -> 0
+
+
+5.) We then move $0x402e79 into the register %esi. And we also move $0x0 into %eax which is our result register.
+
+6.) We then make a call to a function called <__isoc00_sscanf@plt>. This function parses our inputs and reads our inputs stored at $0xc(%rsp) and $0x8(%rsp) as our arguments.
+
+7.) Now we do a signed comparison of the immediate value $0x1 to the value stored in %eax. If its less than or equal to 1, we jump to explode bomb.
+
+8.) We then move the value stored at 0x8(%rsp) into %eax. and then we do a signed comparison of %eax to 0xc(%rsp). So technically we are comparing 0x8(%rsp) to 0xc(%rsp). If they are NOT equal, we jump to the move instruction. If they are equal, BOMB EXPLODES.
+
+9.) Now we move 0xc(%rsp) into %edi. %edi becomes our argument in the switch statement. We then call for the <func_switch>.
+
+
+Switch Function:
+
+1.) So the value at 0xc(%rsp) is now in %edi. Which is technically %rdx in %edi.
+
+2.) The first thing done in the swithc is a signed comparison of the immediate value $0x7 to %edi. If the value is greater than 7, it jumps to explode bomb.
+
+3.) If its less than, our value in %edi is swapped with a value according to the switch table.
+
+We jump according to this address computation: *0x402750(, %rdi, 8) -> (8 signifies 8 bytes of separation)
+
+if %esi is:
+
+0: 0x400fd3 -> mov $0x85, %eax
+1: 0x400fe0 -> mov $0x36b, %eax
+2: 0x400fe6 -> mov $0x190, %eax
+3: 0x400fec -> mov $0x153, %eax
+4: 0x400ff2 -> mov $0x1ba, %eax
+5: 0x400ff8 -> mov $0x207, %eax
+6: 0x401002 -> explode bomb :(
+
+
+Back to Phase 3:
+
+10.) Now we move %eax into %ebx. And we move %rcx into %edi. We than call the switch function again. Since %rcx is the same as $0x8(%rsp).
+
+11.) After the switch is performed for both %rcx and %rdx, we compare them since the are stored in %eax and %ebx respectively. After the switch function executes for %rcx as it did for %rdx, we then compare the returned value from both switch statements. Where %rdx switch statement is stored in %eax and %rcx switch statement is stored in %ebx. If they are not equal we jump to the bomb.
+
+12.) We need two integer inputs in which they have the same value after their respectively switch statements to exit phase 3.
+

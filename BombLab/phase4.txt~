@@ -1,0 +1,96 @@
+00000000004010b5 <phase_4>:
+  4010b5:       48 83 ec 18             sub    $0x18,%rsp
+  4010b9:       48 8d 4c 24 0c          lea    0xc(%rsp),%rcx
+  4010be:       48 8d 54 24 08          lea    0x8(%rsp),%rdx
+  4010c3:       be 79 2e 40 00          mov    $0x402e79,%esi
+  4010c8:       b8 00 00 00 00          mov    $0x0,%eax
+  4010cd:       e8 ce fb ff ff          callq  400ca0 <__isoc99_sscanf@plt>
+  4010d2:       83 f8 02                cmp    $0x2,%eax
+  4010d5:       75 0c                   jne    4010e3 <phase_4+0x2e>
+  4010d7:       8b 44 24 0c             mov    0xc(%rsp),%eax
+  4010db:       83 e8 02                sub    $0x2,%eax
+  4010de:       83 f8 02                cmp    $0x2,%eax
+  4010e1:       76 05                   jbe    4010e8 <phase_4+0x33>
+  4010e3:       e8 ec 05 00 00          callq  4016d4 <explode_bomb>
+  4010e8:       8b 74 24 0c             mov    0xc(%rsp),%esi
+  4010ec:       bf 06 00 00 00          mov    $0x6,%edi
+  4010f1:       e8 88 ff ff ff          callq  40107e <func4>
+  4010f6:       39 44 24 08             cmp    %eax,0x8(%rsp)
+  4010fa:       75 05                   jne    401101 <phase_4+0x4c>
+  4010fc:       48 83 c4 18             add    $0x18,%rsp
+  401100:       c3                      retq
+  401101:       e8 ce 05 00 00          callq  4016d4 <explode_bomb>
+  401106:       eb f4                   jmp    4010fc <phase_4+0x47>
+
+
+000000000040107e <func4>:
+  40107e:       b8 00 00 00 00          mov    $0x0,%eax
+  401083:       85 ff                   test   %edi,%edi
+  401085:       7e 2d                   jle    4010b4 <func4+0x36>
+  401087:       41 54                   push   %r12
+  401089:       55                      push   %rbp
+  40108a:       53                      push   %rbx
+  40108b:       89 fb                   mov    %edi,%ebx
+  40108d:       89 f5                   mov    %esi,%ebp
+  40108f:       89 f0                   mov    %esi,%eax
+  401091:       83 ff 01                cmp    $0x1,%edi
+  401094:       74 19                   je     4010af <func4+0x31>
+  401096:       8d 7f ff                lea    -0x1(%rdi),%edi
+  401099:       e8 e0 ff ff ff          callq  40107e <func4>
+  40109e:       44 8d 24 28             lea    (%rax,%rbp,1),%r12d
+  4010a2:       8d 7b fe                lea    -0x2(%rbx),%edi
+  4010a5:       89 ee                   mov    %ebp,%esi
+  4010a7:       e8 d2 ff ff ff          callq  40107e <func4>
+  4010ac:       44 01 e0                add    %r12d,%eax
+  4010af:       5b                      pop    %rbx
+  4010b0:       5d                      pop    %rbp
+  4010b1:       41 5c                   pop    %r12
+  4010b3:       c3                      retq
+  4010b4:       c3                      retq
+
+
+-----------------------------------------------------------------------------
+
+Phase 4:
+
+1.) Allocating space on the stack
+
+2.) address computation for 2 integers at 0xc(%rsp) and 0x8(%rsp) respectively. Both called %rcx and %rdx.
+
+3.) We then move the immediate value $0x402e79 into %esi. We also move $0x0 into %eax.
+
+%eax -> 0
+
+4.) String parsing function call to <__isoc99_sscanf@plt>
+
+5.) signed comparion of 2 to %eax. If they are NOT equal. Bomb explodes.
+
+One of the integers could be 2?
+
+6.) We then move %rcx into %eax. And then subtract 2 from %rcx.
+
+So, lets say originally %rcx = x and %rdx = y.
+
+%eax now contrains %rcx - 2. ---> %eax = x -2
+
+7.) We do another signed comparison of 2 and whatever is in %eax. If the value is below or equal to 2, then we can continue forward.
+
+8.) We then move %rxc into %esi. And we move $0x6 into %edi.
+
+%edi = 6
+
+9.) Call to <func4>, where we use %edi as an argument. Initialized to 6.
+
+
+<func4>: In summary, the func4 function is a recursive function that calculates the sum of all numbers from n to 1 (inclusive) using the following formula: func4(n) = n + func4(n-1) + func4(n-2). When n is equal to 1, the function returns 1.
+
+1.) Move 0 into %eax.
+
+2.) test %edi, %edi -> test to see if %edi is 0. If its 0 then the ZF is set and we jump using jle. Since we know its 6. We continue in the function.
+
+3.)
+
+
+
+
+Therefore, the starting integer we need to input is 28, and the result of func4(8) = 21 , which will cause the bomb to exit successfully.

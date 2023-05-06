@@ -1,0 +1,138 @@
+0000000000400f72 <phase_2>:
+  400f72:       41 54                   push   %r12
+  400f74:       55                      push   %rbp
+  400f75:       53                      push   %rbx
+  400f76:       48 83 ec 20             sub    $0x20,%rsp
+  400f7a:       48 89 e6                mov    %rsp,%rsi
+  400f7d:       e8 d7 09 00 00          callq  401959 <read_six_numbers>
+  400f82:       83 3c 24 00             cmpl   $0x0,(%rsp)
+  400f86:       78 0a                   js     400f92 <phase_2+0x20>
+  400f88:       48 89 e3                mov    %rsp,%rbx
+  400f8b:       bd 01 00 00 00          mov    $0x1,%ebp
+  400f90:       eb 1e                   jmp    400fb0 <phase_2+0x3e>
+  400f92:       e8 3d 07 00 00          callq  4016d4 <explode_bomb>
+  400f97:       eb ef                   jmp    400f88 <phase_2+0x16>
+  400f99:       41 8b 44 24 04          mov    0x4(%r12),%eax
+  400f9e:       89 05 6c 38 20 00       mov    %eax,0x20386c(%rip)        # 604810 <trap>
+  400fa4:       83 c5 01                add    $0x1,%ebp
+  400fa7:       48 83 c3 04             add    $0x4,%rbx
+  400fab:       83 fd 06                cmp    $0x6,%ebp
+  400fae:       74 13                   je     400fc3 <phase_2+0x51>
+  400fb0:       49 89 dc                mov    %rbx,%r12
+  400fb3:       89 e8                   mov    %ebp,%eax
+  400fb5:       03 03                   add    (%rbx),%eax
+  400fb7:       39 43 04                cmp    %eax,0x4(%rbx)
+  400fba:       74 dd                   je     400f99 <phase_2+0x27>
+  400fbc:       e8 13 07 00 00          callq  4016d4 <explode_bomb>
+  400fc1:       eb d6                   jmp    400f99 <phase_2+0x27>
+  400fc3:       48 83 c4 20             add    $0x20,%rsp
+  400fc7:       5b                      pop    %rbx
+  400fc8:       5d                      pop    %rbp
+  400fc9:       41 5c                   pop    %r12
+  400fcb:       c3                      retq
+
+------------------------------------------------------------------------------------------------
+
+Assembly Behavior:
+
+1.) Begins by pushing %r12 (address: 0x400d40), %rbp (address: 0x0), and %rbx (address: 0x1) to the stack.
+
+2.) The immediate value $0x20 is then subtracted from %rsp (address: 0x7fffffffe028), this is for allocating space on the stack. We will add 0x20 to %rsp at the end to restore the stack. We then mov the value in %rsp to %rsi. The value in %rsp being whatever the %rsp points to at the top of the stack.
+
+%rsp, %rsi -> both contain the memory address that points to the top of the stack.
+
+3.) callq to 401959, function called <read_six_numbers>. This function will read 6 integers from the user and store them on the stack in 0x4 offset memory locations due to integer types taking 4 bytes of memory.
+
+4.) cmpl is known as compare logical in which compl source destination -> where the source is subtracted from the destination and the sign flag is changed based on the result. (destination - source) if its negative then we jump because of the js instruction, if its positive we continue.
+
+5.) We skip over the js call, if our first integer does not set off the sign flag, which means our first integer is at least non-negative.
+
+6.) We then move the address stored in %rsp to %rbx. The memory	address	in %rsp	points to the top of the stack, which is what %rsi also	does.
+
+%rsp, %rsi, and	now %rbx all contain the address that points to	the top	of the stack. The stack	now contains the 6 integers that was inputted and the very top of the stack is the first integer.
+
+7.) We then move the immediate value $0x1 into %ebp. %ebp is acting like our counter to keep track of how many integers we process. Since we did the cmpl of 0x0 and (%rsp), we have already process the first	integer. So %ebp contains an address that points to the	value 1.
+
+8.) We then have to follow the next jmp instruction which jumps us to the address 400fb0 -> which is a " mov %rbx, %r12 " intstruction.
+
+9.) Now we are moving the address at %rbx into the general purpose register %r12. So now:
+%rsp, %rsi, %rbx, and %r12 all point to the top of the stack.
+
+10.) We then move the address of %ebp which contains the value 1 to the register %eax which is our result register.
+
+11.) We then add the value at (%rbx) which is the first integer in our stack to the value currently in %eax which is 1 since %ebp is at 1. So if our first non-negative integer input is 1, then the value now in %eax is 1 + 1 = 2.
+
+12.) We then compare the value of %eax to the 0x4(%rbx), this simply means the next integer. Since each integer is a 4 byte quantity, the offset of 0x4 btyes here means the next integer in the stack. If they're equal: for example say our inputs is: 1 2 _ _ _ _, if our second integer input is equal to the value stored in %eax, then we jump to 400f99.
+
+13.) We then move 0x4(%r12) into %eax. Since %r12 points to the top of the stack and we're dealing with an offset of 4 bytes, we are moving the 2nd integer in %eax. Now %eax has the value 2. (which it originally had).
+
+14.) We then move the address of %eax to another register %rip with an offset of 0x20389c.
+
+15.) We then add $0x1 to %ebp, signifying we processed another integer.
+
+16.) We then add $0x4 to %rbx, so now %rbx points to the second integer in the stack. Since %rbx originally points to the first integer in the stack (as it contains the address to the top of the stack), the new address it contains is offsetted by 4 bytes which means we are looking at the next integer.
+
+17.) We then compare 6 to %ebp. Once we have processed all 6 integers we will do an additional jump. For our purposed here, our %ebp is at 2. So we continue back to 400fb0 (the start of our loop) and we continue the same thing until we finally reach %ebp of 6.
+
+18.) Once our %ebp is at 6, we then jump to 400fc3, which does an add 0x20 to %rsp (which restores the stack). We then pop %rbx, %rbp, and %r12. And return. We are now done!
+
+Our formula follows the pattern:
+
+Process:
+
+int t[6];
+if (t[0] < 0)
+	explode_bomb();
+	
+for(int i=0; i<5; i++)
+	if(t[i+1]!=i+1+t[i])
+		explode_bomb();
+
+Conclusion:
+
+Valid inputs:
+
+0 1 3 6 10 15
+
+or
+
+
+
+
+-------------------------------------------------------------------------------------------------
+Disassemled Code with Test String: 1 2 3 4 5 6
+
+Dump of assembler code for function phase_2:
+=> 0x0000000000400f72 <+0>:	push   %r12
+   0x0000000000400f74 <+2>:	push   %rbp
+   0x0000000000400f75 <+3>:	push   %rbx
+   0x0000000000400f76 <+4>:	sub    $0x20,%rsp
+   0x0000000000400f7a <+8>:	mov    %rsp,%rsi
+   0x0000000000400f7d <+11>:	call   0x401959 <read_six_numbers>
+   0x0000000000400f82 <+16>:	cmpl   $0x0,(%rsp)
+   0x0000000000400f86 <+20>:	js     0x400f92 <phase_2+32>
+   0x0000000000400f88 <+22>:	mov    %rsp,%rbx
+   0x0000000000400f8b <+25>:	mov    $0x1,%ebp
+   0x0000000000400f90 <+30>:	jmp    0x400fb0 <phase_2+62>
+   0x0000000000400f92 <+32>:	call   0x4016d4 <explode_bomb>
+   0x0000000000400f97 <+37>:	jmp    0x400f88 <phase_2+22>
+   0x0000000000400f99 <+39>:	mov    0x4(%r12),%eax
+   0x0000000000400f9e <+44>:	mov    %eax,0x20386c(%rip)        # 0x604810 <trap>
+   0x0000000000400fa4 <+50>:	add    $0x1,%ebp
+   0x0000000000400fa7 <+53>:	add    $0x4,%rbx
+   0x0000000000400fab <+57>:	cmp    $0x6,%ebp
+   0x0000000000400fae <+60>:	je     0x400fc3 <phase_2+81>
+   0x0000000000400fb0 <+62>:	mov    %rbx,%r12
+   0x0000000000400fb3 <+65>:	mov    %ebp,%eax
+   0x0000000000400fb5 <+67>:	add    (%rbx),%eax
+   0x0000000000400fb7 <+69>:	cmp    %eax,0x4(%rbx)
+   0x0000000000400fba <+72>:	je     0x400f99 <phase_2+39>
+   0x0000000000400fbc <+74>:	call   0x4016d4 <explode_bomb>
+   0x0000000000400fc1 <+79>:	jmp    0x400f99 <phase_2+39>
+   0x0000000000400fc3 <+81>:	add    $0x20,%rsp
+   0x0000000000400fc7 <+85>:	pop    %rbx
+   0x0000000000400fc8 <+86>:	pop    %rbp
+   0x0000000000400fc9 <+87>:	pop    %r12
+   0x0000000000400fcb <+89>:	ret    
+End of assembler dump.
+

@@ -1,0 +1,125 @@
+0000000000400f53 <phase_1>:
+  400f53:       53                      push   %rbx
+  400f54:       48 89 fb                mov    %rdi,%rbx
+  400f57:       80 7f 01 00             cmpb   $0x0,0x1(%rdi)
+  400f5b:       75 07                   jne    400f64 <phase_1+0x11>
+  400f5d:       80 3b 67                cmpb   $0x67,(%rbx)
+  400f60:       75 09                   jne    400f6b <phase_1+0x18>
+  400f62:       5b                      pop    %rbx
+  400f63:       c3                      retq
+  400f64:       e8 6b 07 00 00          callq  4016d4 <explode_bomb>
+  400f69:       eb f2                   jmp    400f5d <phase_1+0xa>
+  400f6b:       e8 64 07 00 00          callq  4016d4 <explode_bomb>
+  400f70:       eb f0                   jmp    400f62 <phase_1+0xf>
+
+
+Phase 1 Behavior:
+
+So, I have slowly began unraveling the behavior of Phase 1.
+
+1.) We begin by pushing %rbx onto the stack. This saves its initial value. So whatever string we are comparing is originally in %rbx.
+
+2.) We move the value of %rdi into %rbx. From the gdb debugger, I came to the conclusion that the inputted string is stored in %rdi and then moved to %rbx. We saw this as true when we did x /25c of the memory address of %rdi and it contain our 'test string'
+
+3.) Next we compare something to the test string. $0x0 is the immediate value 0. And its doing a character comparison. The ASCII character with the value 0 is the null character. So that means that the offset of 1 spot in the character string should be a NULL character. Since the jump is 'jne' which means jump if not equal, if the second character in our input string is NOT NULL then it will jump precisely to bomb explode.
+
+4.) If this is not true, then it continutes to another comparison. (%rbx) would contain the actual string, not the address since we dereference it. We are now doing another comparison with 0 offset, which equates to the first character of the string. The comparison is looking for $0x67 which is the ASCII character 'g'. So the string must begin with the letter g, followed by a NULL character.
+
+Conclusion:
+
+Our string is something like 'g\0.....'
+
+
+Answer: 'g'
+
+
+
+----------------------------------------------------------------------------------
+
+[harris@lnxsrv06 ~/CS33/bomb70]$ gdb bomb
+GNU gdb (GDB) 10.1
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-pc-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from bomb...
+(gdb) break phase_1
+Breakpoint 1 at 0x400f53
+(gdb) run
+Starting program: /w/home.21/cs/ugrad/harris/CS33/bomb70/bomb 
+   .------ /------.                                              
+   |       -       |                                              
+   |               |        It's a perfect day for some mayhem.   
+   |               |                                              
+   |               |                                              
+_______________________                                           
+===========.===========         Have some fun with my six         
+  / ~~~~~     ~~~~~ \           explodey phases ...              
+ /|     |     |     |\                                           
+ W   ---  / \  ---   W                                           
+ \.      |o o|      ./                                           
+  |                 |                                             
+  \    #########    /                                            
+   \  ## ----- ##  /        Watch your step!                     
+    \##         ##/                                              
+     \_____v_____/                                               
+test string
+
+Breakpoint 1, 0x0000000000400f53 in phase_1 ()
+(gdb) disas
+Dump of assembler code for function phase_1:
+=> 0x0000000000400f53 <+0>:	push   %rbx
+   0x0000000000400f54 <+1>:	mov    %rdi,%rbx
+   0x0000000000400f57 <+4>:	cmpb   $0x0,0x1(%rdi)
+   0x0000000000400f5b <+8>:	jne    0x400f64 <phase_1+17>
+   0x0000000000400f5d <+10>:	cmpb   $0x67,(%rbx)
+   0x0000000000400f60 <+13>:	jne    0x400f6b <phase_1+24>
+   0x0000000000400f62 <+15>:	pop    %rbx
+   0x0000000000400f63 <+16>:	ret    
+   0x0000000000400f64 <+17>:	call   0x4016d4 <explode_bomb>
+   0x0000000000400f69 <+22>:	jmp    0x400f5d <phase_1+10>
+   0x0000000000400f6b <+24>:	call   0x4016d4 <explode_bomb>
+   0x0000000000400f70 <+29>:	jmp    0x400f62 <phase_1+15>
+End of assembler dump.
+(gdb) p/x $rbx
+$1 = 0x1
+(gdb) p/x $rdi
+$2 = 0x604820
+(gdb) x /25c 0x604820
+0x604820 <input_strings>:	116 't'	101 'e'	115 's'	116 't'	32 ' '	115 's'	116 't'	114 'r'
+0x604828 <input_strings+8>:	105 'i'	110 'n'	103 'g'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604830 <input_strings+16>:	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604838 <input_strings+24>:	0 '\000'
+(gdb) x /25c 604821
+0x93a95:	Cannot access memory at address 0x93a95
+(gdb) x /25c 0x604821
+0x604821 <input_strings+1>:	101 'e'	115 's'	116 't'	32 ' '	115 's'	116 't'	114 'r'	105 'i'
+0x604829 <input_strings+9>:	110 'n'	103 'g'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604831 <input_strings+17>:	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604839 <input_strings+25>:	0 '\000'
+(gdb) x /25c 0x604830
+0x604830 <input_strings+16>:	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604838 <input_strings+24>:	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604840 <input_strings+32>:	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'	0 '\000'
+0x604848 <input_strings+40>:	0 '\000'
+(gdb) x /25c 0x400f62
+0x400f62 <phase_1+15>:	91 '['	-61 '\303'	-24 '\350'	107 'k'	7 '\a'	0 '\000'	0 '\000'	-21 '\353'
+0x400f6a <phase_1+23>:	-14 '\362'	-24 '\350'	100 'd'	7 '\a'	0 '\000'	0 '\000'	-21 '\353'	-16 '\360'
+0x400f72 <phase_2>:	65 'A'	84 'T'	85 'U'	83 'S'	72 'H'	-125 '\203'	-20 '\354'	32 ' '
+0x400f7a <phase_2+8>:	72 'H'
+(gdb)
+
+
+0x400f62 <phase_1+15>:  91 '['  -61 '\303'      -24 '\350'      107 'k' 7 '\a' \
+ 0 '\000'        0 '\000'        -21 '\353'
+ -> "[\303\305k\a\000\000\353"
